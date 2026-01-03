@@ -298,11 +298,14 @@
 
         relatedPerformers.forEach((performer, i) => {
 
+			if (document.querySelector(`#related-performer-${performer.id}`)) return;
+
             let card = document.createElement('div');
             card.style.display = 'flex';
             card.style.flexDirection = 'column';
             card.style.alignItems = 'center';
             card.style.padding = '0 .5vw';
+			card.id = `related-performer-${performer.id}`;
 
             let link = document.createElement('a');
             link.href = `${baseLink}${performer.id}`;
