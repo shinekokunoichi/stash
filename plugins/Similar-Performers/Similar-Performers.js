@@ -65,16 +65,59 @@
         });
     };
 
+    let relatedTabContent = null;
+
+    async function MakeMenu() {
+
+        const navBar = document.querySelector('.nav.nav-tabs');
+        let menuButton = document.createElement('a');
+        let currentPage = window.location.href.split('/');
+        currentPage.pop();
+        const falsePage = currentPage.join('/') + '/related';
+        menuButton.className = 'nav-item nav-link';
+        menuButton.id = 'performer-tabs-tab-related';
+        menuButton.role = 'tab';
+        menuButton.innerText = 'Related';
+        menuButton.ariaSelected = false;
+        menuButton.style.cursor = 'pointer';
+        navBar.appendChild(menuButton);
+
+        relatedTabContent = document.createElement('div');
+        relatedTabContent.id = 'performer-tabs-tabpane-related';
+        relatedTabContent.role = 'tabpanel'
+        relatedTabContent.className = 'fade tab-pane';
+
+        menuButton.onclick = RelatedSelected;
+        let allMenu = document.querySelectorAll('.nav-item.nav-link');
+        allMenu.forEach((tab) => {
+            if (tab.id === 'performer-tabs-tab-related') return;
+            tab.addEventListener('click', () => { document.querySelector('#performer-tabs-tab-related').classList.remove('active'); });
+        });
+    };
+
+    function RelatedSelected() {
+        let currentActive = document.querySelector('.active')
+        if (currentActive.id != this.id) currentActive.classList.remove('active');
+        document.querySelector('.fade.tab-pane.active.show').classList.remove('active', 'show');
+        this.ariaSelected = true;
+        this.classList.add('active');
+        let tabContent = document.querySelector('.tab-content');
+        relatedTabContent.classList.add('active', 'show');
+        tabContent.appendChild(relatedTabContent);
+    };
+
     async function AutoComplete(container) {
 
-        if (container.querySelector('#scene-autocomplete')) return;
+        if (document.querySelector('#performer-tabs-tab-related')) return;
+
+        await MakeMenu();
 
         const group = document.createElement('div');
         group.className = 'form-group row autocomplete-container';
 
-        const label = document.createElement('label');
+        const label = document.createElement('h3');
         label.setAttribute('for', 'scene-autocomplete');
-        label.className = 'form-label col-form-label col-sm-12';
+        label.style.textAlign = 'center';
         label.innerText = 'Add related performers';
 
         const input = document.createElement('input');
@@ -90,7 +133,7 @@
         group.appendChild(input);
         group.appendChild(button);
 
-        container.append(group);
+        relatedTabContent.append(group);
 
         const awesomplete = new Awesomplete(input, {
             minChars: 1,
@@ -115,6 +158,7 @@
         });
         input.addEventListener('input', () => FilterPerformer(input, awesomplete));
         button.addEventListener('click', () => LinkPerformer(input, awesomplete));
+
         await AllPerformers();
         await ShowRelated();
     };
@@ -230,9 +274,7 @@
         let relatedPerformers = []
 
         if (!currentPerfomer.hasOwnProperty('relatedPerformers') || !performerList) return;
-        console.log(currentPerfomer)
         currentPerfomer = currentPerfomer.relatedPerformers.toString().split('|')
-        console.log(currentPerfomer)
 
         performerList.forEach((performer) => {
             if (currentPerfomer.includes(performer.id)) relatedPerformers.push(performer);
@@ -247,24 +289,47 @@
             relatedContainer = document.createElement('div');
             relatedContainer.className = 'row';
             relatedContainer.id = 'relatedContainer';
-            let titleContainer = document.createElement('h6');
+            relatedContainer.style.justifyContent = 'center';
+            let titleContainer = document.createElement('h3');
             titleContainer.innerText = 'Related Performers';
-            document.querySelector('.performer-head').appendChild(titleContainer);
+            titleContainer.style.textAlign = 'center';
+            relatedTabContent.appendChild(titleContainer);
         };
 
-        relatedPerformers.forEach((performer) => {
+        relatedPerformers.forEach((performer, i) => {
+
+			if (document.querySelector(`#related-performer-${performer.id}`)) return;
+
+            let card = document.createElement('div');
+            card.style.display = 'flex';
+            card.style.flexDirection = 'column';
+            card.style.alignItems = 'center';
+            card.style.padding = '0 .5vw';
+			card.id = `related-performer-${performer.id}`;
+
             let link = document.createElement('a');
             link.href = `${baseLink}${performer.id}`;
             link.innerText = performer.name;
             link.target = '_blank';
-            relatedContainer.appendChild(link);
-            let divider = document.createElement('p');
-            divider.innerText = ' | ';
-            divider.style = 'margin: 0 0.2vw';
-            relatedContainer.append(divider);
+            link.style.fontSize = '1vw';
+
+            let image = document.createElement('img');
+            image.src = performer.image_path;
+            image.style.width = '100px';
+            image.style.height = '200px';
+
+            let divider = document.createElement('hr');
+            divider.style.height = '-webkit-fill-available';
+            divider.style.borderLeft = '.1vw solid';
+            divider.style.borderRight = '.1vw solid';
+
+            card.appendChild(link);
+            card.appendChild(image);
+            relatedContainer.appendChild(card)
+            if (i != relatedPerformers.length - 1) relatedContainer.appendChild(divider);
         });
 
-        document.querySelector('.performer-head').appendChild(relatedContainer);
+        relatedTabContent.appendChild(relatedContainer);
     };
 
     function SetupObserver() {
